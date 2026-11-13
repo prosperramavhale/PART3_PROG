@@ -1,0 +1,10 @@
+using System.Security.Claims; using Microsoft.AspNetCore.Authorization; using Microsoft.AspNetCore.Mvc; using Microsoft.EntityFrameworkCore; using RaceDay.API.Data; using RaceDay.API.DTOs;
+namespace RaceDay.API.Controllers;
+[ApiController,Route("api/categories")]
+public class CategoriesController(RaceDayContext db):ControllerBase
+{
+ /// <summary>Updates a category belonging to an event owned by the authenticated Organiser.</summary>
+ [Authorize(Roles="Organiser"),HttpPut("{id:int}"),ProducesResponseType(StatusCodes.Status200OK),ProducesResponseType(StatusCodes.Status403Forbidden),ProducesResponseType(StatusCodes.Status404NotFound)] public async Task<IActionResult> Update(int id,CategoryRequest request){var c=await db.Categories.Include(x=>x.Event).FirstOrDefaultAsync(x=>x.CategoryId==id);if(c is null)return NotFound();if(c.Event!.OrganiserId!=int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!))return Forbid();if(request.DistanceKm<=0||request.EntryFee<0)return BadRequest(new{message="Distance must be positive and entry fee cannot be negative."});c.Name=request.Name.Trim();c.DistanceKm=request.DistanceKm;c.EntryFee=request.EntryFee;c.MaxParticipants=request.MaxParticipants;await db.SaveChangesAsync();return Ok(c);}
+ /// <summary>Deletes a category if it has no enrolments.</summary>
+ [Authorize(Roles="Organiser"),HttpDelete("{id:int}"),ProducesResponseType(StatusCodes.Status204NoContent),ProducesResponseType(StatusCodes.Status403Forbidden),ProducesResponseType(StatusCodes.Status404NotFound)] public async Task<IActionResult> Delete(int id){var c=await db.Categories.Include(x=>x.Event).FirstOrDefaultAsync(x=>x.CategoryId==id);if(c is null)return NotFound();if(c.Event!.OrganiserId!=int.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!))return Forbid();if(await db.Enrolments.AnyAsync(x=>x.CategoryId==id))return Conflict(new{message="A category with enrolments cannot be deleted."});db.Categories.Remove(c);await db.SaveChangesAsync();return NoContent();}
+}

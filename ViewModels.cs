@@ -1,0 +1,5 @@
+using System.ComponentModel.DataAnnotations;
+namespace RaceDay.MVC.Models;
+public class LoginViewModel { [Required,EmailAddress] public string Email {get;set;}=""; [Required,DataType(DataType.Password)] public string Password {get;set;}=""; }
+public class RegisterViewModel { [Required,EmailAddress] public string Email {get;set;}=""; [Required,MinLength(8),DataType(DataType.Password)] public string Password {get;set;}=""; [Required] public string FirstName {get;set;}=""; [Required] public string LastName {get;set;}=""; public string? Phone {get;set;} [Required] public string Role {get;set;}="Participant"; }
+public class EventViewModel { public int EventId {get;set;} [Required] public string Title {get;set;}=""; public string? Description {get;set;} [Required] public string Location {get;set;}=""; [DataType(DataType.DateTime)] public DateTime EventDate {get;set;}=DateTime.Now.AddDays(14); public string EventType {get;set;}="Run"; public string Status {get;set;}="Published"; public IFormFile? BannerImage {get;set;} }

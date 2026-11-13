@@ -1,0 +1,17 @@
+using Microsoft.EntityFrameworkCore;
+using RaceDay.API.Models;
+namespace RaceDay.API.Data;
+public class RaceDayContext(DbContextOptions<RaceDayContext> options) : DbContext(options)
+{
+ public DbSet<Role> Roles => Set<Role>(); public DbSet<User> Users => Set<User>(); public DbSet<Event> Events => Set<Event>(); public DbSet<Category> Categories => Set<Category>(); public DbSet<Enrolment> Enrolments => Set<Enrolment>(); public DbSet<Result> Results => Set<Result>();
+ protected override void OnModelCreating(ModelBuilder b)
+ {
+  b.Entity<Role>().ToTable("Role").HasKey(x=>x.RoleId); b.Entity<Role>().Property(x=>x.RoleName).HasMaxLength(20).IsRequired(); b.Entity<Role>().HasIndex(x=>x.RoleName).IsUnique();
+  b.Entity<User>().ToTable("User").HasKey(x=>x.UserId); b.Entity<User>().Property(x=>x.Email).HasMaxLength(255).IsRequired(); b.Entity<User>().HasIndex(x=>x.Email).IsUnique(); b.Entity<User>().Property(x=>x.PasswordHash).HasMaxLength(255).IsRequired(); b.Entity<User>().Property(x=>x.FirstName).HasMaxLength(100).IsRequired(); b.Entity<User>().Property(x=>x.LastName).HasMaxLength(100).IsRequired(); b.Entity<User>().Property(x=>x.Phone).HasMaxLength(20); b.Entity<User>().Property(x=>x.ProfilePictureUrl).HasMaxLength(1000); b.Entity<User>().HasOne(x=>x.Role).WithMany(x=>x.Users).HasForeignKey(x=>x.RoleId).OnDelete(DeleteBehavior.Restrict);
+  b.Entity<Event>().ToTable("Event"); b.Entity<Event>().HasKey(x=>x.EventId); b.Entity<Event>().Property(x=>x.Title).HasMaxLength(200).IsRequired(); b.Entity<Event>().Property(x=>x.Location).HasMaxLength(300).IsRequired(); b.Entity<Event>().Property(x=>x.Status).HasMaxLength(20).IsRequired(); b.Entity<Event>().Property(x=>x.BannerImageUrl).HasMaxLength(1000); b.Entity<Event>().Property(x=>x.EventType).HasMaxLength(20).IsRequired(); b.Entity<Event>().HasOne(x=>x.Organiser).WithMany(x=>x.OrganisedEvents).HasForeignKey(x=>x.OrganiserId).OnDelete(DeleteBehavior.Restrict);
+  b.Entity<Category>().ToTable("Category"); b.Entity<Category>().HasKey(x=>x.CategoryId); b.Entity<Category>().Property(x=>x.Name).HasMaxLength(100).IsRequired(); b.Entity<Category>().Property(x=>x.DistanceKm).HasPrecision(5,2); b.Entity<Category>().Property(x=>x.EntryFee).HasPrecision(10,2); b.Entity<Category>().HasOne(x=>x.Event).WithMany(x=>x.Categories).HasForeignKey(x=>x.EventId).OnDelete(DeleteBehavior.Cascade);
+  b.Entity<Enrolment>().ToTable("Enrolment"); b.Entity<Enrolment>().HasKey(x=>x.EnrolmentId); b.Entity<Enrolment>().Property(x=>x.Status).HasMaxLength(20).IsRequired(); b.Entity<Enrolment>().HasIndex(x=>new{x.EventId,x.ParticipantId}).IsUnique(); b.Entity<Enrolment>().HasOne(x=>x.Event).WithMany(x=>x.Enrolments).HasForeignKey(x=>x.EventId).OnDelete(DeleteBehavior.Restrict); b.Entity<Enrolment>().HasOne(x=>x.Category).WithMany(x=>x.Enrolments).HasForeignKey(x=>x.CategoryId).OnDelete(DeleteBehavior.Restrict); b.Entity<Enrolment>().HasOne(x=>x.Participant).WithMany(x=>x.Enrolments).HasForeignKey(x=>x.ParticipantId).OnDelete(DeleteBehavior.Restrict);
+  b.Entity<Result>().ToTable("Result"); b.Entity<Result>().HasKey(x=>x.ResultId); b.Entity<Result>().Property(x=>x.Notes).HasMaxLength(500); b.Entity<Result>().HasIndex(x=>x.EnrolmentId).IsUnique(); b.Entity<Result>().HasOne(x=>x.Enrolment).WithOne(x=>x.Result).HasForeignKey<Result>(x=>x.EnrolmentId).OnDelete(DeleteBehavior.Cascade);
+  b.Entity<Role>().HasData(new Role{RoleId=1,RoleName="Organiser"},new Role{RoleId=2,RoleName="Participant"});
+ }
+}
